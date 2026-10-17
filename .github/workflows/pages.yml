@@ -1,0 +1,39 @@
+name: Publish Schemoteka
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/30 * * * *'
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.dep.outputs.page_url }}
+    steps:
+      - name: Download build from Google Drive
+        id: get
+        run: |
+          curl -sSL -o site.zip "https://drive.usercontent.google.com/download?id=1N33Y9Y_1ZjkveDss15e6RNxeXxP8W-vq&export=download&confirm=t"
+          mkdir site && unzip -q site.zip -d site
+          test -f site/index.html
+          NEW=$(cat site/version.txt)
+          OLD=$(curl -fsSL "https://lewka2009-ux.github.io/schemoteka/version.txt" || echo none)
+          echo "new=$NEW old=$OLD"
+          if [ "$NEW" = "$OLD" ] && [ "${{ github.event_name }}" = "schedule" ]; then echo "skip=1" >> $GITHUB_OUTPUT; fi
+      - uses: actions/configure-pages@v5
+        if: steps.get.outputs.skip != '1'
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.get.outputs.skip != '1'
+        with:
+          path: site
+      - id: dep
+        if: steps.get.outputs.skip != '1'
+        uses: actions/deploy-pages@v4
+
