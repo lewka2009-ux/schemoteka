@@ -20,7 +20,7 @@ jobs:
       - name: Download build from Google Drive
         id: get
         run: |
-          curl -sSL -o site.zip "https://drive.usercontent.google.com/download?id=1N33Y9Y_1ZjkveDss15e6RNxeXxP8W-vq&export=download&confirm=t"
+          curl -sSL -o site.zip "https://drive.usercontent.google.com/download?id=1suOZWqlAnx-iW-J58n37z0u8u8LGXKTz&export=download&confirm=t"
           mkdir site && unzip -q site.zip -d site
           test -f site/index.html
           NEW=$(cat site/version.txt)
