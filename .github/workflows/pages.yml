@@ -4,7 +4,7 @@ on:
   schedule:
     - cron: '*/30 * * * *'
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 concurrency:
@@ -27,6 +27,21 @@ jobs:
           OLD=$(curl -fsSL "https://lewka2009-ux.github.io/schemoteka/version.txt" || echo none)
           echo "new=$NEW old=$OLD"
           if [ "$NEW" = "$OLD" ] && [ "${{ github.event_name }}" = "schedule" ]; then echo "skip=1" >> $GITHUB_OUTPUT; fi
+      # документация из сборки (site/docs) хранится в самом репозитории, папка docs/
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          path: repo
+      - name: Save docs to repository
+        run: |
+          if [ -d site/docs ]; then
+            mkdir -p repo/docs && cp -r site/docs/. repo/docs/
+            cd repo
+            git config user.name "schemoteka-bot"
+            git config user.email "schemoteka-bot@users.noreply.github.com"
+            git add docs
+            if git diff --cached --quiet; then echo "docs: no changes"; else git commit -m "docs: update from Schemoteka build $(cat ../site/version.txt)" && git push; fi
+          fi
       - uses: actions/configure-pages@v5
         if: steps.get.outputs.skip != '1'
       - uses: actions/upload-pages-artifact@v3
@@ -36,4 +51,3 @@ jobs:
       - id: dep
         if: steps.get.outputs.skip != '1'
         uses: actions/deploy-pages@v4
-
